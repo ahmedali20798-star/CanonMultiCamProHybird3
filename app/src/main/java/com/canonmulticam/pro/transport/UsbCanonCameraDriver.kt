@@ -13,7 +13,6 @@ import com.canonmulticam.pro.domain.LatestFrameSlot
 import com.canonmulticam.pro.domain.ProtocolType
 import com.canonmulticam.pro.domain.StreamQuality
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -231,10 +230,15 @@ class UsbCanonCameraDriver(
             runCatching {
                 val recVal = if (record) 4 else 0
                 var code = RESP_DEVICE_BUSY
-                repeat(3) { attempt ->
+                var attempt = 0
+                while (attempt < 3) {
                     code = setEosIntProperty(PROP_EOS_MOVIE_RECORD, recVal)
-                    if (code != RESP_DEVICE_BUSY) return@repeat
-                    if (attempt < 2) delay(60L)
+                    if (code != RESP_DEVICE_BUSY) {
+                        attempt = 3
+                    } else {
+                        attempt++
+                        if (attempt < 3) Thread.sleep(60L)
+                    }
                 }
                 if (code == RESP_DEVICE_PROP_NOT_SUPPORTED) {
                     code = if (record) {
