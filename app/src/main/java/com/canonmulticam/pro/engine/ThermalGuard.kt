@@ -33,14 +33,16 @@ class ThermalGuard(context: Context) {
     }
 
     fun start() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && listener != null) {
-            runCatching { powerManager.addThermalStatusListener(listener) }
+        val activeListener = listener
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && activeListener != null) {
+            runCatching { powerManager.addThermalStatusListener(activeListener) }
         }
     }
 
     fun stop() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && listener != null) {
-            runCatching { powerManager.removeThermalStatusListener(listener) }
+        val activeListener = listener
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && activeListener != null) {
+            runCatching { powerManager.removeThermalStatusListener(activeListener) }
         }
     }
 }
