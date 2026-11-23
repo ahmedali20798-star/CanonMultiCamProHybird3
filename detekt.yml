@@ -49,9 +49,9 @@ style:
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
+  UnusedPrivateProperty:
+    active: true
 
 potential-bugs:
   UnsafeCallOnNullableType:
-    active: true
-  UnusedPrivateProperty:
     active: true
