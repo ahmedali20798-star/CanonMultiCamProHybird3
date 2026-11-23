@@ -65,7 +65,7 @@ class PtpIpCameraDriver(override val ipAddress: String) : ICameraDriver {
                     putInt(40)
                     putInt(PKT_INIT_CMD_REQ)
                     putLong(0x0011223344556677L)
-                    putLong(0x8899AABBCCDDEEFFL)
+                    putLong(0x8899AABBCCDDEEFFuL.toLong())
                     putShort('C'.code.toShort())
                     putShort(0)
                     putInt(0x00010000)
