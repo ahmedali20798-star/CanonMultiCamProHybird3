@@ -71,32 +71,37 @@ class MultiCamViewModel(application: Application) : AndroidViewModel(application
     private var isAppInBackground = false
     private var exposurePollJob: Job? = null
 
-    val actors: List<CameraSessionActor> = List(4) { idx ->
-        CameraSessionActor(
-            slotIndex = idx,
-            labelStore = labelStore,
-            thermalLevelProvider = {
-                val base = thermalGuard.thermalLevel.value
-                val connectedCount = slotsState.value.count { it.isConnected }
-                if (connectedCount >= 3 && base == ThermalLevel.NOMINAL) {
-                    ThermalLevel.MODERATE
-                } else {
-                    base
+    lateinit var actors: List<CameraSessionActor>
+
+    init {
+        actors = List(4) { idx ->
+            CameraSessionActor(
+                slotIndex = idx,
+                labelStore = labelStore,
+                thermalLevelProvider = {
+                    val base = thermalGuard.thermalLevel.value
+                    val connectedCount = slotsState.value.count { it.isConnected }
+                    if (connectedCount >= 3 && base == ThermalLevel.NOMINAL) {
+                        ThermalLevel.MODERATE
+                    } else {
+                        base
+                    }
+                },
+                onUnexpectedRecordStop = { failedSlot ->
+                    triggerEmergencyHaptic()
+                    val header = actors.getOrNull(failedSlot)?.state?.value?.displayHeader
+                        ?: "كاميرا #${failedSlot + 1}"
+                    _recordFailureBanner.value = "تحذير حرج: توقف التسجيل فجأة في $header!"
+                },
+                onDisconnectedCallback = { disconnectedSlot ->
+                    histogramBins.set(disconnectedSlot, null)
+                    slotDisconnectedCallback?.invoke(disconnectedSlot)
+                },
+                onFrameUpdated = { slotIdx, slot ->
+                    frameDeliveryCallback?.invoke(slotIdx, slot)
                 }
-            },
-            onUnexpectedRecordStop = { failedSlot ->
-                triggerEmergencyHaptic()
-                val header = actors[failedSlot].state.value.displayHeader
-                _recordFailureBanner.value = "تحذير حرج: توقف التسجيل فجأة في $header!"
-            },
-            onDisconnectedCallback = { disconnectedSlot ->
-                histogramBins.set(disconnectedSlot, null)
-                slotDisconnectedCallback?.invoke(disconnectedSlot)
-            },
-            onFrameUpdated = { slotIdx, slot ->
-                frameDeliveryCallback?.invoke(slotIdx, slot)
-            }
-        )
+            )
+        }
     }
 
     val slotsState: StateFlow<List<CameraSlotState>> = combine(
